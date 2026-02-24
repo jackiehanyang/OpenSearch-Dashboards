@@ -379,9 +379,17 @@ export class VisualizationBuilder {
   renderVisualization({
     searchContext,
     onSelectTimeRange,
+    augmentEchartsSpec,
   }: {
     searchContext?: ExecutionContextSearch;
     onSelectTimeRange?: (range?: TimeRange) => void;
+    augmentEchartsSpec?: import('./visualization_render').VisualizationRender extends (
+      props: infer P
+    ) => any
+      ? P extends { augmentEchartsSpec?: infer A }
+        ? A
+        : never
+      : never;
   }) {
     const ExpressionRenderer = this.getExpression()?.ReactExpressionRenderer;
     if (!ExpressionRenderer) {
@@ -396,6 +404,7 @@ export class VisualizationBuilder {
       ExpressionRenderer,
       onSelectTimeRange,
       onStyleChange: this.updateStyles.bind(this),
+      augmentEchartsSpec,
     });
   }
 

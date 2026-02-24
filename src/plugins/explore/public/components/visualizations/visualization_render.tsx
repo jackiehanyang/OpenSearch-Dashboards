@@ -28,6 +28,11 @@ interface Props {
   ExpressionRenderer?: ExpressionsStart['ReactExpressionRenderer'];
   onSelectTimeRange?: (timeRange?: TimeRange) => void;
   onStyleChange?: (updatedStyle: Partial<TableChartStyle>) => void;
+  /**
+   * Optional hook to post-process the ECharts spec before rendering.
+   * Used for overlays/tracks that must share the same x-axis domain.
+   */
+  augmentEchartsSpec?: (spec: any, ctx: { timeRange: TimeRange }) => any;
 }
 
 const defaultStyleOptions: TableChartStyle = {
@@ -46,6 +51,7 @@ export const VisualizationRender = ({
   ExpressionRenderer,
   onSelectTimeRange,
   onStyleChange,
+  augmentEchartsSpec,
 }: Props) => {
   const visualizationData = useObservable(data$);
   const visConfig = useObservable(config$);
@@ -116,6 +122,7 @@ export const VisualizationRender = ({
         ExpressionRenderer={ExpressionRenderer}
         searchContext={searchContext}
         onSelectTimeRange={onSelectTimeRange}
+        augmentEchartsSpec={augmentEchartsSpec}
       />
     );
   }
@@ -130,6 +137,7 @@ const ChartRender = ({
   onSelectTimeRange,
   searchContext,
   ExpressionRenderer,
+  augmentEchartsSpec,
 }: {
   data?: VisData;
   config?: RenderChartConfig;
@@ -137,13 +145,15 @@ const ChartRender = ({
   onSelectTimeRange?: (timeRange?: TimeRange) => void;
   searchContext?: ExecutionContextSearch;
   ExpressionRenderer?: ExpressionsStart['ReactExpressionRenderer'];
+  augmentEchartsSpec?: Props['augmentEchartsSpec'];
 }) => {
   const spec = useMemo(() => {
     return createVisSpec({ data, config, timeRange });
   }, [config, data, timeRange]);
 
   if (getChartRender() === 'echarts') {
-    return <EchartsRender spec={spec} onSelectTimeRange={onSelectTimeRange} />;
+    const augmented = augmentEchartsSpec ? augmentEchartsSpec(spec, { timeRange }) : spec;
+    return <EchartsRender spec={augmented} onSelectTimeRange={onSelectTimeRange} />;
   }
 
   return (
